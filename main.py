@@ -1,7 +1,8 @@
+import os
 import requests
 
-APP_TOKEN = "这里填写你的AppToken"
-UID = "这里填写你的UID"
+APP_TOKEN = os.environ["WXPUSHER_APP_TOKEN"]
+UID = os.environ["WXPUSHER_UID"]
 
 content = """
 🔥 今日 AI 热点
@@ -25,4 +26,5 @@ data = {
 
 response = requests.post(url, json=data)
 
+print(response.status_code)
 print(response.text)
