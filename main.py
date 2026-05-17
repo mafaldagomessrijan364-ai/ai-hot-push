@@ -7,16 +7,21 @@ WXPUSHER_UID = os.environ["WXPUSHER_UID"]
 AIHOT_API = "https://aihot.virxact.com/api/public/items"
 WXPUSHER_API = "https://wxpusher.zjiecode.com/api/send/message"
 
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    )
+}
+
 
 def extract_items(payload):
-    """
-    兼容不同 JSON 结构，尽量从 AIHOT 返回结果里取出列表。
-    """
     if isinstance(payload, list):
         return payload
 
     if isinstance(payload, dict):
-        for key in ["data", "items", "list", "records", "result"]:
+        for key in ["items", "data", "list", "records", "result"]:
             value = payload.get(key)
 
             if isinstance(value, list):
@@ -34,11 +39,17 @@ def extract_items(payload):
 def fetch_aihot_items(limit=8):
     response = requests.get(
         AIHOT_API,
+        headers=HEADERS,
         params={
-            "mode": "selected"
+            "mode": "selected",
+            "take": limit
         },
         timeout=20
     )
+
+    print("AIHOT status:", response.status_code)
+    print("AIHOT response preview:", response.text[:500])
+
     response.raise_for_status()
 
     payload = response.json()
@@ -64,8 +75,8 @@ def build_message(items):
     lines.append("")
 
     for index, item in enumerate(items, start=1):
-        title = pick(item, ["title", "name", "headline"], "未命名标题")
-        summary = pick(item, ["summary", "description", "content", "reason", "recommendReason"], "")
+        title = pick(item, ["title", "titleZh", "name", "headline"], "未命名标题")
+        summary = pick(item, ["summary", "summaryZh", "description", "content", "reason", "recommendReason"], "")
         source = pick(item, ["source", "sourceName", "channel", "siteName"], "")
         url = pick(item, ["url", "link", "originalUrl"], "")
 
@@ -101,8 +112,8 @@ def push_to_wxpusher(content):
 
     response = requests.post(WXPUSHER_API, json=data, timeout=20)
 
-    print(response.status_code)
-    print(response.text)
+    print("WxPusher status:", response.status_code)
+    print("WxPusher response:", response.text)
 
     response.raise_for_status()
 
@@ -110,5 +121,8 @@ def push_to_wxpusher(content):
 if __name__ == "__main__":
     items = fetch_aihot_items(limit=8)
     message = build_message(items)
+
+    print("Final message:")
     print(message)
+
     push_to_wxpusher(message)
