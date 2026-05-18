@@ -3,6 +3,7 @@ import requests
 
 WXPUSHER_APP_TOKEN = os.environ["WXPUSHER_APP_TOKEN"]
 WXPUSHER_UID = os.environ["WXPUSHER_UID"]
+WXPUSHER_TOPIC_ID = int(os.environ["WXPUSHER_TOPIC_ID"])
 
 AIHOT_API = "https://aihot.virxact.com/api/public/items"
 WXPUSHER_API = "https://wxpusher.zjiecode.com/api/send/message"
@@ -71,7 +72,7 @@ def build_message(items):
         return "今天暂时没有抓取到 AIHOT 精选内容。"
 
     lines = []
-    lines.append("🔥 今日 AIHOT 精选")
+    lines.append("🔥 AIHOT 今日精选")
     lines.append("")
 
     for index, item in enumerate(items, start=1):
@@ -107,7 +108,8 @@ def push_to_wxpusher(content):
         "content": content,
         "summary": "AIHOT 今日精选",
         "contentType": 1,
-        "uids": [WXPUSHER_UID]
+        "uids": [WXPUSHER_UID],
+        "topicIds": [WXPUSHER_TOPIC_ID]
     }
 
     response = requests.post(WXPUSHER_API, json=data, timeout=20)
